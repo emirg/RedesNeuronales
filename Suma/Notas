@@ -1,0 +1,8 @@
+A network consisting of a single neuron 
+with weights={1,1}, bias=0 and linear activation 
+function performs the addition of the two input numbers.
+
+--> Una sola neurona
+--> Pesos: W = [1,1] 
+--> Bias: b = 0
+--> Funcion de activacion: Funcion linear
