@@ -32,7 +32,7 @@ for i in range(largest_number):
 # input variables
 alpha = 0.1
 input_dim = 2
-hidden_dim = 64
+hidden_dim = 32
 output_dim = 1
 
 
@@ -46,7 +46,7 @@ synapse_1_update = np.zeros_like(synapse_1)
 synapse_h_update = np.zeros_like(synapse_h)
 
 # training logic
-for j in range(20000):
+for j in range(10000):
     
     # generate a simple addition problem (a + b = c)
     a_int = np.random.randint(256/2) # int version
@@ -56,6 +56,10 @@ for j in range(20000):
     b = int2binary[b_int] # binary encoding
 
     # true answer
+    #if a_int>b_int:
+    #    c_int=a_int
+    #else:
+    #    c_int=b_int
     c_int = a_int + b_int
     c = int2binary[c_int]
     
@@ -131,8 +135,57 @@ for j in range(20000):
         print ("Error:" + str(overallError))
         print ("Pred:" + str(d))
         print ("True:" + str(c))
+        #print("weights_0 "+  str(synapse_0))
+        #print("weights_1 "+  str(synapse_1))
+        #print("weights_bias "+  str(synapse_h))
         out = 0
-        for index,x in enumerate(reversed(d)):
+        #print((d[0])[0])
+        for index,x in enumerate(reversed(d[0])):
+            #print(x)
             out += x*pow(2,index)
-        print (str(a_int) + " + " + str(b_int) + " = " + str(out))
+        print (str(a_int) + " + " + str(b_int) + " = " + str(out))        
+        #print ("max ( "+str(a_int) + "  " + str(b_int) + ") = " + str(out))
         print ("------------")
+
+def think(a_int,b_int):
+    a = int2binary[a_int] # binary encoding
+    b = int2binary[b_int] # binary encoding
+    d = np.zeros_like(a) # result
+
+    for position in range(binary_dim):
+        # generate input and output
+        X = np.array([[(a[0])[binary_dim - position - 1],(b[0])[binary_dim - position - 1]]])
+
+        # hidden layer (input ~+ prev_hidden)
+        layer_1 = sigmoid(np.dot(X,synapse_0) + np.dot(layer_1_values[-1],synapse_h))
+
+        # output layer (new binary representation)
+        layer_2 = sigmoid(np.dot(layer_1,synapse_1))
+
+        (d[0])[binary_dim - position - 1] = np.round(layer_2[0][0])
+
+    return d
+
+# Main 
+if __name__ == "__main__":
+ 
+    user_input_one = str(input("Entrada uno (p1): "))
+    user_input_two = str(input("Entrada dos (p2): "))
+    user_input_one=int(user_input_one)
+    user_input_two=int(user_input_two)
+    #user_input_one=int2binary[user_input_one]
+    #user_input_two=int2binary[user_input_two]
+    d=think(user_input_one,user_input_two)
+    c_int = user_input_one + user_input_two
+    c = int2binary[c_int]
+    print(c)
+    
+    print(d)
+    print("Respuesta: ")
+    out = 0
+    for index,x in enumerate(reversed(d[0])):
+        out += x*pow(2,index)
+
+    print (str(user_input_one) + " + " + str(user_input_two) + " = " + str(out))        
+    #print ("max ( "+str(a_int) + "  " + str(b_int) + ") = " + str(out))
+    print ("------------")
