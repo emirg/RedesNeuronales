@@ -143,7 +143,7 @@ class NeuralNetwork():
                 print ("Pred:" + str(d))
                 print ("True:" + str(c))
                 out = 0
-                for index,x in enumerate(reversed(d)):
+                for index,x in enumerate(reversed(d[0])):
                     out += x*pow(2,index)
                 print (str(a_int) + " + " + str(b_int) + " = " + str(out))
                 print ("------------")
@@ -224,6 +224,6 @@ if __name__ == "__main__":
     print("Respuesta: ")
     d=neural_network.think(np.array([user_input_one, user_input_two]))
     out = 0
-    for index,x in enumerate(reversed(d)):
+    for index,x in enumerate(reversed(d[0])):
         out += x*pow(2,index)
     print(str(out))

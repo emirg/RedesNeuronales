@@ -107,6 +107,7 @@ for j in range(10000):
     synapse_0 += synapse_0_update * alpha
     synapse_1 += synapse_1_update * alpha
     synapse_h += synapse_h_update * alpha    
+    print(synapse_h)
 
     synapse_0_update *= 0
     synapse_1_update *= 0
