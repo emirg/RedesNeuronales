@@ -1,5 +1,4 @@
 # Recurrent Neural Network from Scratch in Python 3
-
 import copy
 import numpy as np
 
@@ -30,37 +29,30 @@ binary_val = np.unpackbits(np.array([range(max_val)], dtype=np.uint8).T, axis=1)
 # Function to map Integer values to Binary values
 for i in range(max_val):
     int_to_binary[i] = binary_val[i]
-    # print('\nInteger value: ',i)
-    # print('binary value: ', binary_val[i])
+    #print('\nInteger value: ',i)
+    #print('binary value: ', binary_val[i])
 
 
 # NN variables
-# Learning rate controls how quickly or slowly a neural network model learns a problem.
-#This means that a learning rate of 0.1, a traditionally common default value, 
-# would mean that weights in the network are updated 0.1 * (estimated weight error)
-#  or 10% of the estimated weight error each time the weights are updated.
-
-
 learning_rate = 0.1
 
 # Inputs: Values to be added bit by bit
 inputLayerSize = 2
 
-# Hidden Layer with 16 neurons
-hiddenLayerSize = 16
+# Hidden Layer with 64 neurons
+hiddenLayerSize = 64
 
 # Output at one time step is 1 bit
 outputLayerSize = 1
 
 # Initialize Weights
 # Weight of first Synapse (Synapse_0) from Input to Hidden Layer at Current Timestep
-W1 = 2 * np.random.random((inputLayerSize, hiddenLayerSize)) - 1
+W1 = 2 * np.random.random((inputLayerSize, hiddenLayerSize)) - 1 # 2 x 64
 
 # Weight of second Synapse (Synapse_1) from Hidden Layer to Output Layer
-W2 = 2 * np.random.random((hiddenLayerSize, outputLayerSize)) - 1
+W2 = 2 * np.random.random((hiddenLayerSize, outputLayerSize)) - 1 # 64 x 1
 
 # Weight of Synapse (Synapse_h) from Current Hidden Layer to Next Hidden Layer in Timestep
-# carry in 
 W_h = 2 * np.random.random((hiddenLayerSize, hiddenLayerSize)) - 1
 
 
@@ -71,7 +63,7 @@ W_h_update = np.zeros_like(W_h)
 
 
 # Iterate over 10,000 samples for Training
-for j in range(10000):
+for j in range(50000):
     # ----------------------------- Compute True Values for the Sum (a+b) [binary encoded] --------------------------
     # Generate a random sample value for 1st input
     a_int = np.random.randint(max_val/2)
@@ -85,12 +77,8 @@ for j in range(10000):
 
     # True Answer a + b = c
     c_int = a_int + b_int
-    
-    #if a_int>b_int:
-    #    c_int = a_int
-    #else:
-    #    c_int=b_int
     c = int_to_binary[c_int]
+
     # Array to save predicted outputs (binary encoded)
     d = np.zeros_like(c)
 
@@ -115,7 +103,7 @@ for j in range(10000):
         # With increasing value of position, the bit location of "a" and "b" decreases from "7 -> 0"
         # and each iteration computes the sum of corresponding bit of "a" and "b".
         # ex. for position = 0, X = [a[7],b[7]], 7th bit of a and b.
-        X = np.array([[a[binary_dim - position - 1], b[binary_dim - position - 1]]])
+        X = np.array([[a[binary_dim - position - 1], b[binary_dim - position - 1]]]) # 1 x 2
 
         # Actual value for (a+b) = c, c is an array of 8 bits, so take transpose to compare bit by bit with X value.
         y = np.array([[c[binary_dim - position - 1]]]).T
@@ -124,30 +112,29 @@ for j in range(10000):
         # [dot product of Input(X) and Weights(W1)] + [dot product of previous hidden layer values and Weights (W_h)]
         # W_h: weight from previous step hidden layer to current step hidden layer
         # W1: weights from current step input to current hidden layer
-        hidden_layer_values_new = sigmoid(np.dot(X,W1) + np.dot(hidden_layer_values[-1],W_h))
+        layer_1 = sigmoid(np.dot(X,W1) + np.dot(hidden_layer_values[-1],W_h)) # 1 x 64
 
 
         # The new output using new Hidden layer values
-        output_calculated = sigmoid(np.dot(hidden_layer_values_new, W2))
+        layer_2 = sigmoid(np.dot(layer_1, W2)) # 1 x 1
 
-        # Calculate the error (target - calculared)
-        output_error = y - output_calculated
+        # Calculate the error
+        output_error = y - layer_2
 
         # Save the error deltas at each step as it will be propagated back
-        # S'()
-        output_layer_deltas.append((output_error)*sigmoidPrime(output_calculated))
+        output_layer_deltas.append((output_error)*sigmoidPrime(layer_2))
 
         # Save the sum of error at each binary position
         overallError += np.abs(output_error[0])
 
         # Round off the values to nearest "0" or "1" and save it to a list
-        d[binary_dim - position - 1] = np.round(output_calculated[0][0])
+        d[binary_dim - position - 1] = np.round(layer_2[0][0])
 
         # Save the hidden layer to be used later
-        hidden_layer_values.append(copy.deepcopy(hidden_layer_values_new))
+        hidden_layer_values.append(copy.deepcopy(layer_1))
 
     future_layer_1_delta = np.zeros(hiddenLayerSize)
-    
+
 # ----------------------------------- Back Propagating the Error Values to All Previous Time-steps ---------------------
     for position in range(binary_dim):
         # a[0], b[0] -> a[1]b[1] ....
@@ -161,11 +148,46 @@ for j in range(10000):
         layer_1_delta = (future_layer_1_delta.dot(W_h.T) + output_layer_delta.dot(W2.T)) * sigmoidPrime(layer_1)
 
         # Update all the weights and try again
-        W2 += np.atleast_2d(layer_1).T.dot(output_layer_delta) * learning_rate
-        W_h+= np.atleast_2d(prev_hidden_layer).T.dot(layer_1_delta)* learning_rate
-        W1 += X.T.dot(layer_1_delta) * learning_rate
+        W2_update += np.atleast_2d(layer_1).T.dot(output_layer_delta)
+        W_h_update += np.atleast_2d(prev_hidden_layer).T.dot(layer_1_delta)
+        W1_update += X.T.dot(layer_1_delta)
 
         future_layer_1_delta = layer_1_delta
+
+    # Update the weights with the values
+    W1 += W1_update * learning_rate
+    W2 += W2_update * learning_rate
+    W_h += W_h_update * learning_rate
+
+    # Clear the updated weights values
+    W1_update *= 0
+    W2_update *= 0
+    W_h_update *= 0
+
+    if(overallError < 0.10 and j > 30000):
+        print(overallError)
+        # Solicito al usuario dos numeros para comprobar las predicciones de la red
+        user_input_one = str(input("Entrada uno (p1): "))
+        user_input_two = str(input("Entrada dos (p2): "))
+
+        a = int_to_binary[int(user_input_one)]
+        b = int_to_binary[int(user_input_two)]
+
+        c = np.zeros_like(b)
+        for position in range(binary_dim):
+            X = np.array([[a[binary_dim - position - 1], b[binary_dim - position - 1]]])
+
+            layer_1 = sigmoid(np.dot(X, W1) + np.dot(hidden_layer_values[-1], W_h))
+
+            layer_2 = sigmoid(np.dot(layer_1, W2))
+            # Round off the values to nearest "0" or "1" and save it to a list
+            c[binary_dim - position - 1] = np.round(layer_2[0][0])
+        out = 0
+        for index, x in enumerate(reversed(c)):
+            out += x * pow(2, index)
+        print(str(user_input_one) + " + " + str(user_input_two) + " = " + str(out))
+        print("------------")
+        #break
 
     # Print out the Progress of the RNN
     if (j % 1000 == 0):
@@ -177,3 +199,5 @@ for j in range(10000):
             out += x * pow(2, index)
         print(str(a_int) + " + " + str(b_int) + " = " + str(out))
         print("------------")
+
+# ------------------------------------- EOC -----------------------------
