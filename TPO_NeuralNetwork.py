@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import numpy as np
 import csv
 import os
@@ -35,13 +36,13 @@ class NeuralNetwork():
         # NN variables
         self.learning_rate = 0.1
 
-        # Tamaño de las inputs
+        # Dimension de las inputs
         self.inputLayerSize = self.binary_dim * 2
 
-        # Tamaño de las Hidden Layers
+        # Dimension de las Hidden Layers
         self.hiddenLayerSize = 256
 
-        # Tamaño de las outputs
+        # Dimension de las outputs
         self.outputLayerSize = self.binary_dim
 
         # Pesos
@@ -62,7 +63,7 @@ class NeuralNetwork():
         self.hidden_layer_1_values = list()
         self.hidden_layer_2_values = list()
 
-        self.error=0
+        self.overallError=0
 
     # Sigmoid
     def sigmoid(self, z):
@@ -101,7 +102,7 @@ class NeuralNetwork():
             d = np.zeros_like(c)
 
             # Error inicial
-            overallError = 0
+            self.overallError = 0
 
             # ----------------------------- Forward Propagation -----------------------------
 
@@ -111,18 +112,18 @@ class NeuralNetwork():
             # Obtenemos el valor real para comparar
             y = np.array(c).T
 
-            # Calculamos la predicción pasando las entradas a traves de la red
+            # Calculamos la prediccion pasando las entradas a traves de la red
             layer_1 = self.sigmoid(np.dot(X, self.W1))
 
             layer_2 = self.sigmoid(np.dot(layer_1, self.W2))
 
             layer_3 = self.sigmoid(np.dot(layer_2, self.W3))
 
-            # Cálculo del error
+            # Calculo del error
             output_error = y - layer_3
 
             # Actualizamos el error
-            overallError += np.abs(output_error[0][0])
+            self.overallError += np.abs(output_error[0][0])
 
             # Redondeamos los valores a 0 o 1, y ajustamos la forma del vector
             d = np.round(layer_3).reshape(self.binary_dim).astype('int16')
@@ -136,7 +137,7 @@ class NeuralNetwork():
 
             layer_1_delta = layer_2_delta.dot(self.W2.T) * self.sigmoidPrime(layer_1)
 
-            # Actualizamos las matrices utilizadas en la actualización de pesos
+            # Actualizamos las matrices utilizadas en la actualizacion de pesos
             self.W1_update += X.T.dot(layer_1_delta)
             self.W2_update += layer_1.T.dot(layer_2_delta)
             self.W3_update += layer_2.T.dot(output_layer_delta)
@@ -154,11 +155,7 @@ class NeuralNetwork():
             # Muestra el progreso
             if (j % 10000 == 0):
                 print("Iteracion: " + str(j))
-                self.error=0
-                for k in range(self.binary_dim):
-                    #print(overallError[0][k])
-                    self.error+=overallError[0][k]
-                print("Error:" + str(self.error))
+                print("Error:" + str(self.overallError))
                 print("Pred:" + str(d))
                 print("True:" + str(c))
                 out = 0
@@ -172,15 +169,10 @@ class NeuralNetwork():
                 else:
                     print("max(" + str(a_int) + " , " + str(b_int) + ") = " + str(out))
                 print("------------")
-            if j==self.training_size:
-                self.error=0
-                for k in range(self.binary_dim):
-                    #print(overallError[0][k])
-                    self.error+=overallError[0][k]
 
     def predict(self):
         # Solicito al usuario dos numeros para comprobar las predicciones de la red
-        print("ERROR : "+str(self.error))
+        print("ERROR : "+str(self.overallError))
         user_input_one = int(input("Entrada uno (p1): "))
         user_input_two = int(input("Entrada dos (p2): "))
 
